@@ -14,8 +14,12 @@ export function GetConfigTemplate() {
   return window['go']['main']['App']['GetConfigTemplate']();
 }
 
-export function GetMessages(arg1, arg2, arg3) {
-  return window['go']['main']['App']['GetMessages'](arg1, arg2, arg3);
+export function GetIdentities(arg1) {
+  return window['go']['main']['App']['GetIdentities'](arg1);
+}
+
+export function GetMessages(arg1, arg2, arg3, arg4) {
+  return window['go']['main']['App']['GetMessages'](arg1, arg2, arg3, arg4);
 }
 
 export function GetNick() {
@@ -24,6 +28,14 @@ export function GetNick() {
 
 export function GetPoolList() {
   return window['go']['main']['App']['GetPoolList']();
+}
+
+export function GetSelf() {
+  return window['go']['main']['App']['GetSelf']();
+}
+
+export function GetToken(arg1, arg2) {
+  return window['go']['main']['App']['GetToken'](arg1, arg2);
 }
 
 export function Greet(arg1) {
@@ -36,4 +48,8 @@ export function ListLibrary(arg1) {
 
 export function PostMessage(arg1, arg2) {
   return window['go']['main']['App']['PostMessage'](arg1, arg2);
+}
+
+export function UpdateIdentity(arg1) {
+  return window['go']['main']['App']['UpdateIdentity'](arg1);
 }

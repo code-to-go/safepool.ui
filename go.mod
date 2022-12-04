@@ -1,18 +1,17 @@
 module safepool.ui
 
-go 1.18
+go 1.19
 
 require (
-	github.com/code-to-go/safepool v0.0.0-20221129061049-f7f0faebc1a5
+	github.com/code-to-go/safepool.lib v0.0.0-20221201114226-58d3e03c996d
 	github.com/wailsapp/wails/v2 v2.2.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
 	github.com/adrg/xdg v0.4.0 // indirect
-	github.com/aws/aws-sdk-go v1.44.147 // indirect
+	github.com/aws/aws-sdk-go v1.44.150 // indirect
 	github.com/bep/debounce v1.2.1 // indirect
-	github.com/btcsuite/btcd/btcec/v2 v2.2.0 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.1.0 // indirect
 	github.com/ecies/go/v2 v2.0.4 // indirect
 	github.com/ethereum/go-ethereum v1.10.26 // indirect
@@ -35,7 +34,7 @@ require (
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pkg/sftp v1.13.5 // indirect
-	github.com/rivo/uniseg v0.2.0 // indirect
+	github.com/rivo/uniseg v0.4.3 // indirect
 	github.com/rogpeppe/go-internal v1.9.0 // indirect
 	github.com/samber/lo v1.36.0 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect

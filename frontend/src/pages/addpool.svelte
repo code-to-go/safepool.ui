@@ -51,17 +51,13 @@
 
     async function setConfig() {
         try {
-            await CreatePool(config);
+            config = await CreatePool(config);
             infoConfig = "Created";
         } catch (err) {
             infoConfig = "Invalid Configuration: " + err;
         }
     }
 
-    function onConfigChange(e) {
-        config = e.target.value;
-        token = config && btoa(config);
-    }
 </script>
 
 <Popup tabletFullscreen opened={popupOpened} {onPopupClosed}>
@@ -110,15 +106,8 @@
                         placeholder="Config"
                         info={infoConfig}
                         type="textarea"
+                        onChange={e => {config = e.target.value}}
                         value={config}
-                        onChange={onConfigChange}
-                    />
-                    <ListInput
-                        placeholder="Token"
-                        inputStyle={tokenStyle}
-                        type="textarea"
-                        value={token}
-                        readonly
                     />
                     <Block strong>
                         <Row>

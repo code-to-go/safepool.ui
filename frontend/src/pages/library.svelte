@@ -1,79 +1,109 @@
 <script>
-  import { BlockTitle, f7, Icon, Link, List, ListItem, Navbar, NavLeft, NavRight, NavTitle, Page, Searchbar, Subnavbar, theme } from 'framework7-svelte';
-  import { onMount } from 'svelte'
-  import { GetPoolList, ListLibrary } from '../../wailsjs/go/main/App';
-  
+  import {
+    AccordionContent,
+    Block,
+    BlockTitle,
+    Button,
+    Col,
+    f7,
+    Icon,
+    Link,
+    List,
+    ListInput,
+    ListItem,
+    MenuDropdown,
+    MenuDropdownItem,
+    MenuItem,
+    Navbar,
+    NavLeft,
+    NavRight,
+    NavTitle,
+    Page,
+    Row,
+    Searchbar,
+    Segmented,
+    Subnavbar,
+    theme,
+    Toggle,
+  } from "framework7-svelte";
+  import { onMount } from "svelte";
+  import { GetPoolList, ListLibrary } from "../../wailsjs/go/main/App";
+  import Chat from "./chat.svelte";
+
   export let poolName;
-  let vlData = {
+  let data = {
     items: [],
-  }
-  onMount( async () => {
-    const documents = await ListLibrary(poolName) || []
-    console.log(documents)
-    vlData.items = documents.map(d => ({
+  };
+
+  onMount(async () => {
+    const documents = (await ListLibrary(poolName)) || [];
+    console.log(documents);
+    data.items = documents.map((d) => ({
       title: `${d.name}`,
       subtitle: `${d.localPath}`,
-    }))
-  })
+    }));
+    console.log(data.items);
+  });
 
   function searchAll(query, items) {
     const found = [];
     for (let i = 0; i < items.length; i += 1) {
-      if (items[i].title.toLowerCase().indexOf(query.toLowerCase()) >= 0 || query.trim() === '') found.push(i);
+      if (
+        items[i].title.toLowerCase().indexOf(query.toLowerCase()) >= 0 ||
+        query.trim() === ""
+      )
+        found.push(i);
     }
     return found; // return array with mathced indexes
   }
 
   function renderExternal(virtualList, virtualListData) {
-    vlData = virtualListData;
+    data = virtualListData;
   }
-
-
-
 </script>
 
 <Page>
-  <Navbar title="Virtual List">
-    <Subnavbar inner={false}>
-      <Searchbar
+  <Subnavbar inner={false}>
+        <Searchbar
         searchContainer=".virtual-list"
         searchItem="li"
         searchIn=".item-title"
-        disableButton={!theme.aurora}
-      ></Searchbar>
-    </Subnavbar>
-  </Navbar>
-  <List class="searchbar-not-found">
-    <ListItem title="Nothing found"></ListItem>
-  </List>
+        clearButton
+      />
+  </Subnavbar>
+
   <List
     class="searchbar-found"
     ul={false}
     medialList
     virtualList
     virtualListParams={{
-      items: vlData.items,
+      items: data.items,
       searchAll: searchAll,
       renderExternal: renderExternal,
-      height: theme.ios ? 63 : (theme.md ? 73 : 77)
+      height: theme.ios ? 63 : theme.md ? 73 : 77,
     }}
   >
     <ul>
-      {#each vlData.items as item, index (index)}
+
+      {#each data.items as item, index (index)}
         <ListItem
           mediaItem
-          link="#"
-          title={item.title}
-          subtitle={item.subtitle}
-          style={`top: ${vlData.topPosition}px`}
-          virtualListIndex={vlData.items.indexOf(item)}
-        ></ListItem>
+          style={`top: ${data.topPosition}px`}
+          virtualListIndex={data.items.indexOf(item)}
+        >
+        <span slot="title">
+          <b>{item.title}</b>
+        </span>
+              <Row slot="after">
+                <Col><Button>Open</Button></Col>
+                <Col><Button>Update</Button></Col>
+              </Row>
+        </ListItem>
       {/each}
     </ul>
   </List>
 </Page>
-  
-
 
 <style>
 </style>

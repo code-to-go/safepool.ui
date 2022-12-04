@@ -23,23 +23,31 @@
     theme,
     Panel,
     Popup,
+    ListInput,
   } from "framework7-svelte";
   import { onMount } from "svelte";
 
-  import { GetPoolList } from "../../wailsjs/go/main/App";
-  import Addpopup from "./addpopup.svelte";
+  import { GetPoolList, GetSelf } from "../../wailsjs/go/main/App";
+    import Addpool from "./addpool.svelte";
+  import Addpopup from "./addpool.svelte";
 
   let pools = ["something not working!"];
-  onMount(async () => {
-    pools = await GetPoolList() || [];
-  });
+  let selfToken
 
+  async function getPools() {
+    console.log('fetch pool list')
+    pools = await GetPoolList() || [];
+  }
+  async function getSelfToken() {
+    selfToken = btoa(await GetSelf())
+  }
   let popupOpened = false;
+  const style = "height: 8em";
 </script>
 
-<Addpopup {popupOpened} onPopupClosed={() => popupOpened = false}/>
+<Addpool {popupOpened} onPopupClosed={() => popupOpened = false}/>
 
-<Page name="view-home">
+<Page name="view-home" onPageBeforeIn={getPools}>
   <!-- Views/Tabs container -->
   <Views tabs class="pool-areas">
     <!-- Tabbar for switching views-tabs -->
@@ -81,6 +89,17 @@
               <i class="icon icon-f7" slot="media" />
             </ListItem>
           {/each}
+        </List>
+      </Tab>
+      <Tab id="view-settings" onTabShow={getSelfToken}>
+        <List>
+          <ListInput 
+          placeholder="Identity"
+          type="textarea"
+          inputStyle={style}
+          info="your identity token"
+          value={selfToken} 
+          readonly/>
         </List>
       </Tab>
     </Tabs>

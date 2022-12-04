@@ -4,13 +4,15 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"strconv"
 
-	"github.com/code-to-go/safepool/api"
-	"github.com/code-to-go/safepool/api/chat"
-	"github.com/code-to-go/safepool/api/library"
-	"github.com/code-to-go/safepool/core"
-	pool "github.com/code-to-go/safepool/pool"
-	"github.com/code-to-go/safepool/transport"
+	"github.com/code-to-go/safepool.lib/api"
+	"github.com/code-to-go/safepool.lib/api/chat"
+	"github.com/code-to-go/safepool.lib/api/library"
+	"github.com/code-to-go/safepool.lib/core"
+	pool "github.com/code-to-go/safepool.lib/pool"
+	"github.com/code-to-go/safepool.lib/security"
+	"github.com/code-to-go/safepool.lib/transport"
 	"gopkg.in/yaml.v3"
 )
 
@@ -67,29 +69,36 @@ func (a *App) GetConfigTemplate() (string, error) {
 	return string(data), err
 }
 
-func (a *App) CreatePool(config string) error {
+func (a *App) CreatePool(config string) (string, error) {
 	var c pool.Config
 	err := yaml.Unmarshal([]byte(config), &c)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	if len(c.Configs) == 0 || c.Name == "" {
-		return pool.ErrInvalidConfig
+		return "", pool.ErrInvalidConfig
 	} else {
 		core.Info("valid config for pool '%s' with %d exchanges", c.Name, len(c.Configs))
 	}
 	err = pool.Define(c)
 	if core.IsErr(err, "cannot define pool '%s': %v", c.Name) {
-		return err
+		return "", err
 	}
 
 	p, err := pool.Create(api.Self, c.Name)
 	if core.IsErr(err, "cannot create pool '%s': %v", c.Name) {
-		return err
+		return "", err
 	}
 	pools[p.Name] = p
-	return nil
+
+	token, err := pool.EncodeToken(pool.Token{
+		Config: c,
+		Host:   api.Self,
+	}, nil)
+	core.IsErr(err, "cannot encode universal token: %v")
+
+	return token, err
 }
 
 func (a *App) AddPool(token string) error {
@@ -123,21 +132,55 @@ func (a *App) AddPool(token string) error {
 	return nil
 }
 
-func (a *App) GetMessages(poolName string, beforeId uint64, limit int) ([]chat.Message, error) {
+func (a *App) GetMessages(poolName string, afterIdS string, beforeIdS string, limit int) ([]chat.Message, error) {
+	beforeId, err := strconv.ParseUint(beforeIdS, 10, 64)
+	if core.IsErr(err, "invalid beforeId parameter '%s': %v", beforeIdS) {
+		return nil, err
+	}
+	afterId, err := strconv.ParseUint(afterIdS, 10, 64)
+	if core.IsErr(err, "invalid afterId parameter '%s': %v", afterIdS) {
+		return nil, err
+	}
+
 	if p, ok := pools[poolName]; ok {
 		p.Sync()
 		c := chat.Get(p)
-		return c.Pull(beforeId, limit)
+		return c.Pull(afterId, beforeId, limit)
 	}
 	return nil, fmt.Errorf("invalid pool '%s'", poolName)
 }
 
-func (a *App) PostMessage(poolName string, m chat.Message) error {
+func (a *App) PostMessage(poolName string, m chat.Message) (string, error) {
 	if p, ok := pools[poolName]; ok {
 		c := chat.Get(p)
-		return c.Post(m)
+		id, err := c.Post(m)
+		if core.IsErr(err, "cannot post message: %v", m) {
+			return "", err
+		}
+		return strconv.FormatUint(id, 10), nil
 	}
-	return fmt.Errorf("invalid pool '%s'", poolName)
+	return "", fmt.Errorf("invalid pool '%s'", poolName)
+}
+
+func (a *App) GetToken(poolName string, guestKey string) (string, error) {
+	c, err := pool.GetConfig(poolName)
+	if core.IsErr(err, "cannot get pool config: %v") {
+		return "", err
+	}
+
+	t := pool.Token{
+		Config: c,
+		Host:   api.Self,
+	}
+	if guestKey != "" {
+		guest, err := security.IdentityFromBase64(guestKey)
+		if core.IsErr(err, "invalid guest key config: %v") {
+			return "", err
+		}
+		return pool.EncodeToken(t, &guest)
+	} else {
+		return pool.EncodeToken(t, nil)
+	}
 }
 
 func (a *App) ListLibrary(poolName string) []library.Document {
@@ -151,5 +194,29 @@ func (a *App) ListLibrary(poolName string) []library.Document {
 			LocalPath:   "~/Documents/pools/safepool.ch/test.doc",
 			HasChanged:  false,
 		},
+		{
+			Id:          1,
+			Name:        "test2.doc",
+			Size:        192922,
+			Author:      api.Self,
+			ContentType: "application/word",
+			LocalPath:   "~/Documents/pools/safepool.ch/test.doc",
+			HasChanged:  false,
+		},
 	}
+}
+
+func (a *App) GetIdentities(poolName string) ([]pool.Identity, error) {
+	if p, ok := pools[poolName]; ok {
+		return p.Identities()
+	}
+	return nil, fmt.Errorf("invalid pool '%s'", poolName)
+}
+
+func (a *App) UpdateIdentity(identity security.Identity) error {
+	return security.SetIdentity(identity)
+}
+
+func (a *App) GetSelf() security.Identity {
+	return api.Self.Public()
 }
