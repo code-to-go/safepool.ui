@@ -33,10 +33,11 @@
 
   let messagebarInstance;
 
-  export let poolName;
+  export let poolName
 
-  let selfIdentity;
-  let messages = [];
+  let selfIdentity
+  let time = 'loading...'
+  let messages = []
   let lastId = '9223372036854775807'
   onMount(async () => {
     selfIdentity = await GetSelf();
@@ -44,6 +45,7 @@
 
   onMount(async () => {
     messages = (await GetMessages(poolName, '0', lastId, 32)) || [];
+    time = messages.length > 0 ? new Date(messages[0].time) : null
     console.log(messages)
   });
 
@@ -59,24 +61,13 @@
   function isFirstMessage(message, index) {
     const previousMessage = messages[index - 1];
     if (message.isTitle) return false;
-    if (
-      !previousMessage ||
-      previousMessage.type !== message.type ||
-      previousMessage.name !== message.name
-    )
-      return true;
-    return false;
+    return !previousMessage || previousMessage.author !== message.author
   }
+
   function isLastMessage(message, index) {
     const nextMessage = messages[index + 1];
     if (message.isTitle) return false;
-    if (
-      !nextMessage ||
-      nextMessage.type !== message.type ||
-      nextMessage.name !== message.name
-    )
-      return true;
-    return false;
+    return !nextMessage || nextMessage.name !== message.name
   }
   function isTailMessage(message, index) {
     const nextMessage = messages[index + 1];
@@ -99,7 +90,7 @@
       }
       await PostMessage(poolName, m);
       console.log('sent message: ', m)
-      messages.push(m)
+      messages = [...messages, m] 
     }
     // Clear
     messageText = "";
@@ -124,18 +115,9 @@
       />
     </a>
   </Messagebar>
-  {#each messages as message}
-    {message.content}
-  {/each}
-
   <Messages>
-    <MessagesTitle><b>Sunday, Feb 9,</b> 12:58</MessagesTitle>
-    <Message
-        type="received"
-        htmlText="content"
-      />
+    <MessagesTitle><b>{time}</b></MessagesTitle>
     {#each messages as message, index (index)}
-    {message.content}
       <Message
         type={selfIdentity == message.author ? "received" : "sent"}
         name={selfIdentity == message.author ? null : message.author.nick}

@@ -46,8 +46,8 @@ export function ListLibrary(arg1) {
   return window['go']['main']['App']['ListLibrary'](arg1);
 }
 
-export function PostMessage(arg1, arg2) {
-  return window['go']['main']['App']['PostMessage'](arg1, arg2);
+export function PostMessage(arg1, arg2, arg3, arg4) {
+  return window['go']['main']['App']['PostMessage'](arg1, arg2, arg3, arg4);
 }
 
 export function UpdateIdentity(arg1) {

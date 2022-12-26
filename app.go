@@ -95,7 +95,7 @@ func (a *App) CreatePool(config string) (string, error) {
 	token, err := pool.EncodeToken(pool.Token{
 		Config: c,
 		Host:   api.Self,
-	}, nil)
+	}, "")
 	core.IsErr(err, "cannot encode universal token: %v")
 
 	return token, err
@@ -145,16 +145,16 @@ func (a *App) GetMessages(poolName string, afterIdS string, beforeIdS string, li
 	if p, ok := pools[poolName]; ok {
 		p.Sync()
 		c := chat.Get(p)
-		return c.Pull(afterId, beforeId, limit)
+		return c.GetMessages(afterId, beforeId, limit)
 	}
 	return nil, fmt.Errorf("invalid pool '%s'", poolName)
 }
 
-func (a *App) PostMessage(poolName string, m chat.Message) (string, error) {
+func (a *App) PostMessage(poolName string, content string, contentType string, attachements [][]byte) (string, error) {
 	if p, ok := pools[poolName]; ok {
 		c := chat.Get(p)
-		id, err := c.Post(m)
-		if core.IsErr(err, "cannot post message: %v", m) {
+		id, err := c.SendMessage(content, contentType, attachements)
+		if core.IsErr(err, "cannot post chat message: %v") {
 			return "", err
 		}
 		return strconv.FormatUint(id, 10), nil
@@ -162,25 +162,27 @@ func (a *App) PostMessage(poolName string, m chat.Message) (string, error) {
 	return "", fmt.Errorf("invalid pool '%s'", poolName)
 }
 
-func (a *App) GetToken(poolName string, guestKey string) (string, error) {
-	c, err := pool.GetConfig(poolName)
-	if core.IsErr(err, "cannot get pool config: %v") {
-		return "", err
-	}
-
-	t := pool.Token{
-		Config: c,
-		Host:   api.Self,
-	}
-	if guestKey != "" {
-		guest, err := security.IdentityFromBase64(guestKey)
-		if core.IsErr(err, "invalid guest key config: %v") {
+func (a *App) GetToken(poolName string, guestId string) (string, error) {
+	if p, ok := pools[poolName]; ok {
+		c, err := pool.GetConfig(poolName)
+		if core.IsErr(err, "cannot get pool config: %v") {
 			return "", err
 		}
-		return pool.EncodeToken(t, &guest)
-	} else {
-		return pool.EncodeToken(t, nil)
+
+		t := pool.Token{
+			Config: c,
+			Host:   api.Self,
+		}
+
+		if guestId != "" {
+			err = p.SetAccess(guestId, pool.Active)
+			if core.IsErr(err, "cannot set access for id '%s' in pool '%s': %v", guestId, p.Name) {
+				return "", err
+			}
+		}
+		return pool.EncodeToken(t, guestId)
 	}
+	return "", fmt.Errorf("invalid pool '%s'", poolName)
 }
 
 func (a *App) ListLibrary(poolName string) []library.Document {
@@ -206,7 +208,7 @@ func (a *App) ListLibrary(poolName string) []library.Document {
 	}
 }
 
-func (a *App) GetIdentities(poolName string) ([]pool.Identity, error) {
+func (a *App) GetIdentities(poolName string) ([]security.Identity, error) {
 	if p, ok := pools[poolName]; ok {
 		return p.Identities()
 	}

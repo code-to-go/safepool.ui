@@ -27,6 +27,6 @@ export function Greet(arg1:string):Promise<string>;
 
 export function ListLibrary(arg1:string):Promise<Array<library.Document>>;
 
-export function PostMessage(arg1:string,arg2:chat.Message):Promise<string>;
+export function PostMessage(arg1:string,arg2:string,arg3:string,arg4:Array<Array<number>>):Promise<string>;
 
 export function UpdateIdentity(arg1:security.Identity):Promise<Error>;
