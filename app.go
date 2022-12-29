@@ -143,7 +143,6 @@ func (a *App) GetMessages(poolName string, afterIdS string, beforeIdS string, li
 	}
 
 	if p, ok := pools[poolName]; ok {
-		p.Sync()
 		c := chat.Get(p)
 		return c.GetMessages(afterId, beforeId, limit)
 	}
